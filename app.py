@@ -84,9 +84,20 @@ MOCK_DATA = {
 # VIEW CONTROLLER ROUTINGS
 # ==========================================
 @app.route('/')
-@app.route('/admin')
+@app.route('/admin/dashboard')
 def admin_dashboard():
-    return render_template('admin/dashboard.html', data=MOCK_DATA)
+    # ... your existing code that fetches data and creates fig_trend & fig_progress ...
+    
+    # 🛑 CRITICAL FIX: Convert Plotly figures into JSON strings
+    enrollment_trend_json = fig_trend.to_json()
+    course_progress_json = fig_progress.to_json()
+    
+    # Pass these exact variable names to your template
+    return render_template(
+        'admin/dashboard.html',
+        enrollment_trend_graph=enrollment_trend_json,
+        course_progress_graph=course_progress_json
+    )
 
 @app.route('/admin/enrollment')
 def admin_enrollment():
