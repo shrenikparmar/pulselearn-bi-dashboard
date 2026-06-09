@@ -86,9 +86,8 @@ MOCK_DATA = {
 @app.route('/')
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    # ... your existing code that fetches data and creates fig_trend & fig_progress ...
-    
-    # 🛑 CRITICAL FIX: Convert Plotly figures into JSON strings
+    fig_trend = px.line(df, x='Date', y='Enrollments', title='Enrollment Core Trend')
+    fig_progress = px.bar(df, x='Course', y='Progress', title='Course Progress')
     enrollment_trend_json = fig_trend.to_json()
     course_progress_json = fig_progress.to_json()
     
