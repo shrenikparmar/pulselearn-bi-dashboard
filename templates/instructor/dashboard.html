@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-600">
+            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Assigned Roster Count</p>
+            <h3 class="text-2xl font-bold text-gray-800 mt-1">{{ data.global_kpis.instructor.my_students }} Members</h3>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-amber-500">
+            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Pending Task Reviews</p>
+            <h3 class="text-2xl font-bold text-gray-800 mt-1">{{ data.global_kpis.instructor.pending_reviews }} Files</h3>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
+            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Class Average Evaluation</p>
+            <h3 class="text-2xl font-bold text-gray-800 mt-1">{{ data.global_kpis.instructor.class_avg }} Effective</h3>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500">
+            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Intervention Threshold Exceptions</p>
+            <h3 class="text-2xl font-bold text-gray-800 mt-1 text-red-600">{{ data.global_kpis.instructor.at_risk }} Active</h3>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for course in data.courses[:3] %}
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between"><h4 class="text-sm font-black text-gray-800">{{ course.name }}</h4><span class="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">{{ course.cohort }}</span></div>
+                <div class="flex space-x-4 my-3 text-xs">
+                    <div><span class="text-gray-400">Roster:</span> <span class="font-bold text-gray-700">{{ course.students }}</span></div>
+                    <div><span class="text-gray-400">Class Average:</span> <span class="font-bold text-indigo-600">{{ course.avg_grade }}</span></div>
+                </div>
+            </div>
+            <div class="bg-amber-50 p-2.5 rounded border border-amber-100 text-[11px] text-amber-800 font-medium flex items-start">
+                <i class="fa-solid fa-triangle-exclamation mr-2 mt-0.5 text-amber-600"></i>
+                <div><span class="font-bold">Bottleneck Alert:</span> {{ course.bottleneck }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Gradebook Monitor Snapshot</h4>
+            <table class="w-full text-left text-sm">
+                <thead><tr class="border-b border-gray-200 text-gray-400 text-xs font-bold uppercase"><th class="pb-2">Student Name</th><th class="pb-2">Midterm</th><th class="pb-2 text-right">Status</th></tr></thead>
+                <tbody class="divide-y divide-gray-100 text-gray-600">
+                    {% for student in data.students[:3] %}
+                    <tr>
+                        <td class="py-3 font-semibold text-gray-800">{{ student.name }}</td>
+                        <td class="py-3 font-bold text-indigo-600">{{ student.midterm }}</td>
+                        <td class="py-3 text-right"><span class="px-2 py-0.5 rounded text-[10px] font-black uppercase {% if student.status == 'Active' %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-700{% endif %}">{{ student.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm lg:col-span-2">
+            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Class Dimension Target Radar Profile</h4>
+            <div id="inst-radar-canvas" class="w-full h-72"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Plotly.newPlot('inst-radar-canvas', [{
+            type: 'scatterpolar', r: [76, 82, 70, 85, 74, 76],
+            theta: ['Technique', 'Theory Documentation', 'Performance Stage', 'Attendance Core', 'Engagement Velocity', 'Technique'],
+            fill: 'toself', fillcolor: 'rgba(109, 78, 247, 0.15)', line: {color: '#6d4ef7', width: 2.5}
+        }], {polar: {radialaxis: {visible: true, range: [0, 100]}}, margin: {t:25, b:25, l:25, r:25}});
+    });
+</script>
+{% endblock %}

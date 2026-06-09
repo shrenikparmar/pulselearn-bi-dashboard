@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white p-6 rounded-xl shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Dynamic Enrollment Analytics Engine</h4>
+                <div class="text-xs text-gray-400 mt-1" id="drill-breadcrumb">Root Configuration: <span class="font-bold text-blue-600">2026 Annual Overview</span></div>
+            </div>
+            <div class="flex space-x-2" id="drill-controls">
+                <button onclick="executeDrillUp()" class="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-200 transition disabled:opacity-40" id="btn-drill-up" disabled>
+                    <i class="fa-solid fa-arrow-turn-up mr-1"></i> Level Up
+                </button>
+                <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded text-xs font-bold" id="badge-level">Level 1</span>
+            </div>
+        </div>
+        <div id="drilldown-chart-canvas" class="w-full h-96"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">User Processing Conversion Funnel</h4>
+            <div class="space-y-4">
+                <div><div class="flex justify-between text-xs mb-1"><span>System Entry Impressions (4,800)</span><span>100%</span></div>
+                <div class="w-full bg-gray-100 h-6 rounded"><div class="bg-indigo-600 h-6 rounded flex items-center px-3 text-xs text-white font-bold" style="width: 100%">4,800</div></div></div>
+                <div><div class="flex justify-between text-xs mb-1"><span>Account Form Onboarding (2,950)</span><span>61.4%</span></div>
+                <div class="w-full bg-gray-100 h-6 rounded"><div class="bg-indigo-500 h-6 rounded flex items-center px-3 text-xs text-white font-bold" style="width: 61.4%">2,950</div></div></div>
+                <div><div class="flex justify-between text-xs mb-1"><span>Payment Completed Orders (1,150)</span><span>23.9%</span></div>
+                <div class="w-full bg-gray-100 h-6 rounded"><div class="bg-indigo-400 h-6 rounded flex items-center px-3 text-xs text-white font-bold" style="width: 23.9%">1,150</div></div></div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Attrition Analysis Breakdown</h4>
+            <div id="chart-attrition-reasons" class="w-full h-64"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // State Tracking Arrays for Drill Down Logic
+    let currentLevel = 'annual';
+    let selectedQuarter = '';
+    
+    function fetchAndRenderChart(level, period = '') {
+        fetch(`/api/enrollment/drill?level=${level}&period=${period}`)
+            .then(res => res.json())
+            .then(data => {
+                Plotly.newPlot('drilldown-chart-canvas', [{
+                    x: data.labels, y: data.values,
+                    type: 'bar', marker: {color: '#6d4ef7', hovermarker: '#1faa87'}
+                }], { margin: {t:20, b:40, l:40, r:20} });
+                
+                // UI State Synchronizer Updates
+                document.getElementById('badge-level').innerText = `Level ${level === 'annual' ? '1' : level === 'quarter' ? '2' : '3'}`;
+                document.getElementById('btn-drill-up').disabled = (level === 'annual');
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        fetchAndRenderChart('annual');
+        
+        // Intercept Canvas Clicks for Drill-Down Actions
+        document.getElementById('drilldown-chart-canvas').on('plotly_click', function(data){
+            let selectedPoint = data.points[0].x;
+            if(currentLevel === 'annual') {
+                currentLevel = 'quarter'; selectedQuarter = selectedPoint;
+                document.getElementById('drill-breadcrumb').innerHTML = `Root: 2026 Overview &gt; <span class="font-bold text-blue-600">${selectedQuarter} Profile</span>`;
+                fetchAndRenderChart('quarter', selectedQuarter);
+            } else if(currentLevel === 'quarter') {
+                currentLevel = 'month';
+                document.getElementById('drill-breadcrumb').innerHTML = `Root: 2026 Overview &gt; ${selectedQuarter} &gt; <span class="font-bold text-blue-600">${selectedPoint} Weekly</span>`;
+                fetchAndRenderChart('month', 'May'); // Defaults to 'May' sample dataset configuration 
+            }
+        });
+
+        // Horizontal Attrition Profiler
+        Plotly.newPlot('chart-attrition-reasons', [{
+            type: 'bar', orientation: 'h',
+            x: [38, 25, 17, 12, 8],
+            y: ['Financial/Cost', 'Schedule Conflicts', 'Interest Decline', 'Syllabus Depth', 'Platform Bugs'],
+            marker: {color: '#e8395a'}
+        }], {margin: {t:10, b:30, l:120, r:10}});
+    });
+
+    function executeDrillUp() {
+        if(currentLevel === 'month') {
+            currentLevel = 'quarter';
+            document.getElementById('drill-breadcrumb').innerHTML = `Root: 2026 Overview &gt; <span class="font-bold text-blue-600">${selectedQuarter} Profile</span>`;
+            fetchAndRenderChart('quarter', selectedQuarter);
+        } else if(currentLevel === 'quarter') {
+            currentLevel = 'annual';
+            document.getElementById('drill-breadcrumb').innerHTML = `Root Configuration: <span class="font-bold text-blue-600">2026 Annual Overview</span>`;
+            fetchAndRenderChart('annual');
+        }
+    }
+</script>
+{% endblock %}

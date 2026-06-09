@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 rounded-xl text-white flex items-center justify-between shadow-md">
+        <div>
+            <h2 class="text-xl font-black tracking-wide">{{ data.global_kpis.learner.name }}</h2>
+            <p class="text-xs text-indigo-300 font-semibold mt-0.5">Primary Focus Blueprint Track: <span class="text-white underline font-bold">{{ data.global_kpis.learner.course }}</span></p>
+        </div>
+        <div class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase"><i class="fa-solid fa-fire mr-1.5 text-amber-500"></i> {{ data.global_kpis.learner.streak }} System Streak</div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-indigo-600"><p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Track Syllabus Progress</p><h3 class="text-2xl font-bold text-gray-800 mt-1">{{ data.global_kpis.learner.progress }} Mapped</h3></div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-amber-500"><p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Session Active Days</p><h3 class="text-2xl font-bold text-gray-800 mt-1">{{ data.global_kpis.learner.streak }}</h3></div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-emerald-500"><p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Accumulated Hours</p><h3 class="text-2xl font-bold text-gray-800 mt-1">{{ data.global_kpis.learner.hours }} Logged</h3></div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-slate-900"><p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Leaderboard Standings Position</p><h3 class="text-2xl font-bold text-indigo-600 mt-1">{{ data.global_kpis.learner.rank }} Grade Group</h3></div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-sm">
+        <div class="flex justify-between text-xs font-black text-gray-500 mb-2 uppercase tracking-widest"><span>Global Syllabus Track Completion Bar</span><span>68% Matrix Coverage</span></div>
+        <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden"><div class="bg-gradient-to-r from-indigo-600 to-emerald-500 h-4 rounded-full transition-all duration-500" style="width: 68%"></div></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm lg:col-span-2">
+            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Target Core Weekly Checklist Plan</h4>
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border border-gray-100 text-sm"><div class="flex items-center font-semibold text-gray-800"><i class="fa-solid fa-circle-check text-emerald-500 mr-3"></i> <span class="line-through text-gray-400">Ballet posture refresher core lecture</span></div><span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Mon Done</span></div>
+                <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border border-gray-100 text-sm"><div class="flex items-center font-semibold text-gray-800"><i class="fa-solid fa-circle-check text-emerald-500 mr-3"></i> <span class="line-through text-gray-400">Technique-Quiz-3 Examination Portal</span></div><span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Tue Done</span></div>
+                <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border border-gray-100 text-sm"><div class="flex items-center font-semibold text-gray-800"><i class="fa-solid fa-circle text-gray-300 mr-3"></i> <span>Live Interactive Feedback Circle Session</span></div><span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">Wed Todo</span></div>
+                <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border border-gray-100 text-sm"><div class="flex items-center font-semibold text-gray-800"><i class="fa-solid fa-circle text-gray-300 mr-3"></i> <span>Routine Breakdown Video Submission Upload</span></div><span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">Thu Todo</span></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Milestone Target Task Deadlines</h4>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between text-xs border-b border-gray-50 pb-2"><div><p class="font-bold text-gray-800">Technique Test 2</p><p class="text-[10px] text-gray-400 mt-0.5">2026-06-09</p></div><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-black text-[9px] uppercase">High</span></div>
+                <div class="flex items-center justify-between text-xs border-b border-gray-50 pb-2"><div><p class="font-bold text-gray-800">Choreography Draft</p><p class="text-[10px] text-gray-400 mt-0.5">2026-06-11</p></div><span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-black text-[9px] uppercase">Medium</span></div>
+                <div class="flex items-center justify-between text-xs pb-2"><div><p class="font-bold text-gray-800">Peer Feedback Matrix</p><p class="text-[10px] text-gray-400 mt-0.5">2026-06-12</p></div><span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-black text-[9px] uppercase">Low</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Capability Metrics Radar</h4>
+            <div id="learn-radar-canvas" class="w-full h-64"></div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm lg:col-span-2">
+            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Comparative Variance Execution Trace</h4>
+            <div id="learn-line-canvas" class="w-full h-64"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Plotly.newPlot('learn-radar-canvas', [{
+            type: 'scatterpolar', r: [85, 70, 75, 90, 65, 85],
+            theta: ['Posture Check', 'Footwork Track', 'Turns Cadence', 'Stage Presence', 'Timing Accuracy', 'Posture Check'],
+            fill: 'toself', fillcolor: 'rgba(109, 78, 247, 0.15)', line: {color: '#6d4ef7'}
+        }], {polar: {radialaxis: {visible: false}}, margin: {t:20, b:20, l:20, r:20}});
+
+        Plotly.newPlot('learn-line-canvas', [
+            {x: ['W1', 'W2', 'W3', 'W4', 'W5'], y: [3.5, 4.2, 5.0, 4.8, 5.5], type: 'scatter', mode: 'lines+markers', name: 'Your Performance Logs', line: {color: '#6d4ef7', width: 3}},
+            {x: ['W1', 'W2', 'W3', 'W4', 'W5'], y: [3.0, 3.8, 4.1, 4.2, 4.5], type: 'scatter', mode: 'lines', name: 'Global Batch Run Baseline', line: {dash: 'dash', color: '#94a3b8'}}
+        ], {margin: {t:10, b:30, l:30, r:10}, legend: {orientation: 'h'}});
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white p-6 rounded-xl shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Comprehensive Enrolled Student Records</h4>
+            <div class="relative w-full md:w-80">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                <input type="text" id="directory-search-bar" onkeyup="filterDirectory()" placeholder="Filter records natively..." class="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm" id="directory-table-body">
+                <thead>
+                    <tr class="border-b border-gray-200 text-gray-400 font-bold text-xs uppercase"><th class="pb-3">Full Legal Name</th><th class="pb-3">Enrolled Target Track</th><th class="pb-3">Course Completion</th><th class="pb-3">Performance Class</th><th class="pb-3 text-right">Operational Status</th></tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-600">
+                    {% for student in data.students %}
+                    <tr class="hover:bg-gray-50/80 transition cursor-pointer" onclick="openStudentModal('{{ student.name }}', '{{ student.course }}', {{ student.grade }}, {{ student.progress }})">
+                        <td class="py-3.5 font-bold text-gray-900 flex items-center">
+                            <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-black mr-3 uppercase">{{ student.name[:2] }}</div>
+                            {{ student.name }}
+                        </td>
+                        <td class="py-3.5">{{ student.course }}</td>
+                        <td class="py-3.5">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 bg-gray-200 h-2 rounded-full"><div class="bg-emerald-500 h-2 rounded-full" style="width: {{ student.progress }}%"></div></div>
+                                <span class="text-xs font-bold text-gray-700">{{ student.progress }}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5"><span class="px-2.5 py-0.5 rounded-md text-xs font-black bg-gray-900 text-white">{{ student.letter }}</span></td>
+                        <td class="py-3.5 text-right">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {% if student.status == 'Active' %}bg-emerald-100 text-emerald-700{% elif student.status == 'At Risk' %}bg-red-100 text-red-700{% else %}bg-gray-200 text-gray-600{% endif %}">{{ student.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="student-profile-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-xl w-11/12 max-w-4xl p-6 relative">
+        <button onclick="closeStudentModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="border-b border-gray-100 pb-4 mb-4">
+            <h3 class="text-lg font-black text-gray-800" id="m-name">Profile Shell</h3>
+            <p class="text-xs text-gray-400 mt-0.5" id="m-track">Track Schema Mapping</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><h5 class="text-xs font-bold uppercase text-gray-400 mb-2">Grade Trend Progression</h5><div id="modal-line-canvas" class="h-64"></div></div>
+            <div><h5 class="text-xs font-bold uppercase text-gray-400 mb-2">Capabilities Radar Dimension</h5><div id="modal-radar-canvas" class="h-64"></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live Directory Search Filtering
+    function filterDirectory() {
+        let input = document.getElementById('directory-search-bar').value.toLowerCase();
+        let rows = document.querySelectorAll('#directory-table-body tbody tr');
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(input) ? '' : 'none';
+        });
+    }
+
+    function openStudentModal(name, track, grade, progress) {
+        document.getElementById('m-name').innerText = name;
+        document.getElementById('m-track').innerText = `${track} Framework Profile Mapping`;
+        document.getElementById('student-profile-modal').classList.remove('hidden');
+        
+        // Plotly Modal Analytics Multi-Trace Rendering
+        setTimeout(() => {
+            Plotly.newPlot('modal-line-canvas', [{
+                x: ['W1', 'W2', 'W3', 'W4', 'W5'], y: [grade - 10, grade - 4, grade - 2, grade + 2, grade],
+                type: 'scatter', mode: 'lines+markers', line: {color: '#6d4ef7', width: 3}
+            }], {margin: {t:10, b:30, l:30, r:10}, height: 240});
+
+            Plotly.newPlot('modal-radar-canvas', [{
+                type: 'scatterpolar', r: [80, 75, 90, 85, 70, 80],
+                theta: ['Posture', 'Footwork', 'Turns', 'Presence', 'Timing', 'Posture'],
+                fill: 'toself', fillcolor: 'rgba(27, 170, 135, 0.2)', line: {color: '#1faa87'}
+            }], {polar: {radialaxis: {visible: true, range: [0, 100]}}, margin: {t:20, b:20, l:20, r:20}, height: 240});
+        }, 80);
+    }
+
+    function closeStudentModal() { document.getElementById('student-profile-modal').classList.add('hidden'); }
+</script>
+{% endblock %}
