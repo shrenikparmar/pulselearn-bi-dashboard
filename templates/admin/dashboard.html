@@ -76,23 +76,24 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // High-Performance Plotly Vectors
-        Plotly.newPlot('chart-enrollment-trend', [{
-            x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-            y: [400, 480, 590, 710, 820, 960, 1050, 1150],
-            type: 'scatter', mode: 'lines+markers',
-            line: {color: '#6d4ef7', width: 3.5},
-            name: 'Total Registrations'
-        }], {margin: {t:10, b:40, l:40, r:10}, height: 320});
+<div id="enrollmentTrendChart" style="width:100%; height:400px;"></div>
+<div id="courseProgressChart" style="width:100%; height:400px;"></div>
 
-        Plotly.newPlot('chart-course-completion', [{
-            type: 'bar', orientation: 'h',
-            x: [78, 65, 82, 71, 55],
-            y: ['Ballet', 'Hip Hop', 'Contemp', 'Jazz', 'Salsa'],
-            marker: {color: ['#6d4ef7', '#1faa87', '#f59e0b', '#e8395a', '#22c55e']}
-        }], {margin: {t:10, b:30, l:70, r:10}, height: 320});
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        try {          
+            var trendData = JSON.parse('{{ enrollment_trend_graph | safe }}');
+            var progressData = JSON.parse('{{ course_progress_graph | safe }}');
+
+            # Render the line/trend chart
+            Plotly.newPlot('enrollmentTrendChart', trendData.data, trendData.layout, {responsive: true});
+            
+            # Render the progress bar chart
+            Plotly.newPlot('courseProgressChart', progressData.data, progressData.layout, {responsive: true});
+            
+        } catch (error) {
+            console.error("Error rendering Plotly charts:", error);
+        }
     });
 </script>
 {% endblock %}
