@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Students{% endblock %}
+{% block page_title %}Students{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="kpi-card kpi-violet">
+            <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="kpi-label">Total</div>
+            <div class="kpi-value">{{ summary.total }}</div>
+            <div class="kpi-desc">Registered students</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-emerald">
+            <div class="kpi-icon"><i class="bi bi-person-check-fill"></i></div>
+            <div class="kpi-label">Active</div>
+            <div class="kpi-value">{{ summary.active }}</div>
+            <div class="kpi-desc">Currently learning</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-rose">
+            <div class="kpi-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="kpi-label">At Risk</div>
+            <div class="kpi-value">{{ summary.at_risk }}</div>
+            <div class="kpi-desc">Need intervention</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-amber">
+            <div class="kpi-icon"><i class="bi bi-moon-fill"></i></div>
+            <div class="kpi-label">Inactive</div>
+            <div class="kpi-value">{{ summary.inactive }}</div>
+            <div class="kpi-desc">No recent activity</div>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Student Directory</h5>
+        <input id="studentSearch" class="form-control" placeholder="Search students..." style="max-width:280px;" />
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle" id="studentsTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Course</th>
+                    <th>Progress</th>
+                    <th>Grade</th>
+                    <th>Streak</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr data-student-id="{{ s.id }}" class="student-row" role="button">
+                    <td>
+                        <span class="avatar-dot">{{ s.name.split(' ')[0][0] }}{{ s.name.split(' ')[1][0] }}</span>
+                        {{ s.name }}
+                    </td>
+                    <td>{{ s.course }}</td>
+                    <td>
+                        <div class="progress {% if s.progress < 50 %}progress-threshold-red{% elif s.progress < 75 %}progress-threshold-amber{% else %}progress-threshold-green{% endif %}" style="height:10px;">
+                            <div class="progress-bar" style="width:{{ s.progress }}%"></div>
+                        </div>
+                        <small>{{ s.progress }}%</small>
+                    </td>
+                    <td>
+                        <span class="badge {% if s.grade >= 85 %}text-bg-success{% elif s.grade >= 70 %}text-bg-primary{% elif s.grade >= 60 %}text-bg-warning{% else %}text-bg-danger{% endif %}">
+                            {{ s.grade }}
+                        </span>
+                    </td>
+                    <td>{{ s.streak }} days</td>
+                    <td>{{ s.joined }}</td>
+                    <td>
+                        <span class="badge {% if s.status == 'Active' %}text-bg-success{% elif s.status == 'At Risk' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
+                            {{ s.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="studentMeta" class="mb-3"></div>
+                <div class="row g-3">
+                    <div class="col-md-6"><div id="gradeTrendChart" style="height:260px;"></div></div>
+                    <div class="col-md-6"><div id="skillRadarChart" style="height:260px;"></div></div>
+                </div>
+                <h6 class="mt-3">Recent Activity</h6>
+                <ul id="activityLog" class="mb-0"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const searchInput = document.getElementById('studentSearch');
+const rows = Array.from(document.querySelectorAll('#studentsTable tbody tr'));
+
+searchInput.addEventListener('input', () => {
+    const q = searchInput.value.toLowerCase().trim();
+    rows.forEach((row) => {
+        row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
+
+const modalEl = document.getElementById('studentModal');
+const studentModal = new bootstrap.Modal(modalEl);
+
+rows.forEach((row) => {
+    row.addEventListener('click', async () => {
+        const id = row.dataset.studentId;
+        const res = await fetch(`/api/student/${id}`);
+        if (!res.ok) return;
+        const s = await res.json();
+
+        document.getElementById('studentMeta').innerHTML = `<strong>${s.name}</strong> · ${s.course} · Grade ${s.grade}`;
+
+        const ML = { 
+            paper_bgcolor: 'rgba(0,0,0,0)', 
+            plot_bgcolor: 'rgba(0,0,0,0)', 
+            font: { family: 'Outfit, sans-serif', size: 11, color: '#6b7280' } 
+        };
+
+        Plotly.newPlot('gradeTrendChart', [{
+            x: ['W1', 'W2', 'W3', 'W4', 'W5'], y: s.grade_trend,
+            type: 'scatter', mode: 'lines+markers',
+            fill: 'tozeroy', fillcolor: 'rgba(109,78,247,0.08)',
+            line: { color: '#6d4ef7', width: 2.5, shape: 'spline' }, marker: { color: '#6d4ef7', size: 6 },
+        }], {
+            ...ML, title: { text: 'Grade Trend', font: { size: 13 } }, margin: { t: 35, l: 40, r: 15, b: 35 },
+            xaxis: { gridcolor: '#f3f4f6' }, yaxis: { gridcolor: '#f3f4f6', range: [40, 100] }
+        }, { responsive: true, displayModeBar: false });
+
+        Plotly.newPlot('skillRadarChart', [{
+            type: 'scatterpolar', r: s.skills,
+            theta: ['Technique', 'Theory', 'Performance', 'Attendance', 'Engagement'],
+            fill: 'toself', fillcolor: 'rgba(31,170,135,0.1)',
+            line: { color: '#1faa87', width: 2 },
+        }], {
+            ...ML, title: { text: 'Skill Radar', font: { size: 13 } }, margin: { t: 35, l: 20, r: 20, b: 10 },
+            polar: { bgcolor: 'rgba(0,0,0,0)', radialaxis: { visible: true, range: [0, 100], gridcolor: '#e5e7eb' }, angularaxis: { gridcolor: '#e5e7eb' } }
+        }, { responsive: true, displayModeBar: false });
+
+        const list = document.getElementById('activityLog');
+        list.innerHTML = s.activity.map(item => `<li>${item}</li>`).join('');
+
+        studentModal.show();
+    });
+});
+</script>
+{% endblock %}

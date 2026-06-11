@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}At-Risk Alerts{% endblock %}
+{% block page_title %}At-Risk Alerts{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  {% for level, rows in risk_groups.items() %}
+    <div class="col-xl-4">
+      <div class="panel-card p-3">
+        <h5 class="{% if level == 'High' %}text-danger{% elif level == 'Medium' %}text-warning{% else %}text-success{% endif %} mb-3">{{ level }} Risk</h5>
+        {% for s in rows %}
+          <div class="border rounded-3 p-2 mb-2" style="border-color:{% if level == 'High' %}#fecaca{% elif level == 'Medium' %}#fde68a{% else %}#bbf7d0{% endif %} !important;background:{% if level == 'High' %}#fff5f5{% elif level == 'Medium' %}#fffbeb{% else %}#f0fdf4{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <span class="avatar-dot">{{ s.name.split(' ')[0][0] }}{{ s.name.split(' ')[1][0] }}</span>
+                <div>
+                  <div class="fw-semibold">{{ s.name }}</div>
+                  <div class="small text-muted">{{ s.course }} · Last active {{ s.last_active }}</div>
+                </div>
+              </div>
+              <span class="badge badge-risk-{{ s.risk }}">{{ s.risk }}</span>
+            </div>
+            <div class="progress mt-2 {% if s.progress < 50 %}progress-threshold-red{% elif s.progress < 75 %}progress-threshold-amber{% else %}progress-threshold-green{% endif %}" style="height:8px;">
+              <div class="progress-bar" style="width:{{ s.progress }}%"></div>
+            </div>
+            <button class="btn btn-sm btn-outline-primary mt-2">Message</button>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-6">
+    <div class="panel-card p-3">
+      <h5>Plagiarism Flags</h5>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Student</th><th>Course</th><th>Assignment</th><th>Similarity</th></tr></thead>
+          <tbody>
+            {% for p in plagiarism_flags %}
+              <tr><td>{{ p.student }}</td><td>{{ p.course }}</td><td>{{ p.assignment }}</td><td><span class="badge text-bg-danger">{{ p.similarity }}</span></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-xl-6">
+    <div class="panel-card p-3">
+      <h5>Honor Code Violations</h5>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Student</th><th>Type</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for h in honor_code_violations %}
+              <tr>
+                <td>{{ h.student }}</td><td>{{ h.type }}</td><td>{{ h.date }}</td>
+                <td><span class="badge {% if h.status == 'Open' %}text-bg-danger{% elif h.status == 'Reviewed' %}text-bg-warning{% else %}text-bg-success{% endif %}">{{ h.status }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

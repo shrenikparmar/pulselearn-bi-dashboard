@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}License & Utilization{% endblock %}
+{% block page_title %}License &amp; Utilization{% endblock %}
+
+{% block content %}
+
+{# — ROI Banner ————————————————————————————————————————————— #}
+<div class="roi-banner mb-3">
+    <div class="row g-3">
+        <div class="col-sm-6 col-md-3">
+            <div class="roi-label">Cost per Student</div>
+            <div class="roi-val">${{ "%.2f"|format(roi.cost_per_student) }}</div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="roi-label">Revenue per User</div>
+            <div class="roi-val">${{ "%.2f"|format(roi.revenue_per_user) }}</div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="roi-label">License ROI</div>
+            <div class="roi-val">{{ roi.roi_multiplier }}x</div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="roi-label">Unused Seat Cost</div>
+            <div class="roi-val">${{ roi.unused_seat_cost }}/mo</div>
+        </div>
+    </div>
+</div>
+
+{# — Seat Usage + Storage ————————————————————————————————————————————— #}
+<div class="row g-3 mb-3">
+    <div class="col-xl-6">
+        <div class="chart-box">
+            <h5 class="mb-0">Seat Usage Over Time</h5>
+            <span class="chart-subtitle">Student seats used, Mar-Aug</span>
+            <div id="seatUsage" style="height:300px;"></div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="chart-box">
+            <h5 class="mb-0">Storage Breakdown</h5>
+            <span class="chart-subtitle">Total 720 GB used of 1 TB</span>
+            <div id="storageBreakdown" style="height:300px;"></div>
+        </div>
+    </div>
+</div>
+
+{# — Feature Adoption + License Plans —————————————————————————————————— #}
+<div class="row g-3">
+    <div class="col-xl-6">
+        <div class="panel-card p-3">
+            <h5 class="mb-1">Feature Adoption</h5>
+            <span class="chart-subtitle">% of active users engaging with each feature</span>
+            {% for f in feature_adoption %}
+            {% set pct = f.value %}
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size:0.875rem; font-weight:500;">{{ f.feature }}</span>
+                    <span style="font-size:0.82rem; font-weight:600; color:{% if pct >= 75 %}var(--emerald){% elif pct >= 50 %}var(--amber){% else %}var(--rose){% endif %}">{{ pct }}%</span>
+                </div>
+                <div class="progress progress-threshold-{% if pct < 50 %}red{% elif pct < 75 %}amber{% else %}green{% endif %}" style="height:9px; border-radius:100px;">
+                    <div class="progress-bar" style="width:{{ pct }}%; border-radius:100px;" role="progressbar"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="panel-card p-3">
+            <h5 class="mb-3">License Plan Summary</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Plan</th>
+                            <th>Seats</th>
+                            <th>Unit Price</th>
+                            <th class="text-end">Monthly Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plan in license_plans %}
+                        <tr>
+                            <td class="fw-500">{{ plan.plan }}</td>
+                            <td>{{ plan.seats }}</td>
+                            <td class="text-muted">${{ "%.2f"|format(plan.unit_price) }}</td>
+                            <td class="text-end fw-semibold">${{ "{:,.0f}".format(plan.monthly_cost) }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr style="background: #f9fafb; border-top: 2px solid var(--border);">
+                            <td colspan="3" class="text-end fw-bold">Total</td>
+                            <td class="text-end fw-bold" style="color:var(--primary);">${{ "{:,.0f}".format(total_monthly) }}/mo</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const seatUsage = {{ seat_usage|tojson }};
+const storage = {{ storage_breakdown|tojson }};
+
+const LAYOUT = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'Outfit, sans-serif', size: 12, color: '#6b7280' },
+    xaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb' },
+    yaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb' },
+};
+
+// Seat Usage - area chart
+Plotly.newPlot('seatUsage', [{
+    x: seatUsage.map(s => s.month),
+    y: seatUsage.map(s => s.used),
+    type: 'scatter', mode: 'lines+markers',
+    fill: 'tozeroy',
+    fillcolor: 'rgba(109,78,247,0.1)',
+    line: { color: '#6d4ef7', width: 2.5, shape: 'spline' },
+    marker: { color: '#6d4ef7', size: 7 },
+    text: seatUsage.map(s => s.used.toLocaleString()),
+    textposition: 'top center',
+    textfont: { size: 11 },
+}], {
+    ...LAYOUT,
+    margin: { t: 20, l: 55, r: 20, b: 40 },
+    yaxis: { ...LAYOUT.yaxis, range: [500, 950] },
+}, { responsive: true, displayModeBar: false });
+
+// Storage Breakdown - donut
+Plotly.newPlot('storageBreakdown', [{
+    labels: storage.map(s => s.name + ' ' + s.value + ' GB'),
+    values: storage.map(s => s.value),
+    type: 'pie', hole: 0.48,
+    marker: { colors: ['#6d4ef7', '#1faa87', '#f59e0b', '#6366f1'] },
+    textinfo: 'label+percent',
+    textfont: { size: 12 },
+    insidetextorientation: 'radial',
+}], {
+    ...LAYOUT,
+    margin: { t: 20, l: 20, r: 20, b: 20 },
+    legend: { orientation: 'v', x: 1.02, y: 0.5 },
+    showlegend: true,
+}, { responsive: true, displayModeBar: false });
+</script>
+{% endblock %}

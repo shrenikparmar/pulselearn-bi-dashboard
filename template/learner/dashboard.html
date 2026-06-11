@@ -1,0 +1,291 @@
+{# — KPI Cards —————————————————————————————————————————— #}
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="kpi-card kpi-violet">
+            <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="kpi-label">My Students</div>
+            <div class="kpi-value">{{ kpis.my_students }}</div>
+            <div class="kpi-desc">Across all courses</div>
+            <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> +3 this month</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-amber">
+            <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="kpi-label">Pending Reviews</div>
+            <div class="kpi-value">{{ kpis.pending_reviews }}</div>
+            <div class="kpi-desc">Awaiting grading</div>
+            <div class="kpi-trend down"><i class="bi bi-arrow-down-short"></i> 5 due today</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-teal">
+            <div class="kpi-icon"><i class="bi bi-graph-up"></i></div>
+            <div class="kpi-label">Class Avg Grade</div>
+            <div class="kpi-value">{{ kpis.class_avg_grade }}%</div>
+            <div class="kpi-desc">All cohorts combined</div>
+            <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> +2.1% vs last month</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-rose">
+            <div class="kpi-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+            <div class="kpi-label">At-Risk</div>
+            <div class="kpi-value">{{ kpis.at_risk }}</div>
+            <div class="kpi-desc">Need intervention</div>
+            <div class="kpi-trend down"><i class="bi bi-arrow-up-short"></i> 2 high priority</div>
+        </div>
+    </div>
+</div>
+
+{# — Course Cards ———————————————————————————————————————— #}
+<div class="row g-3 mb-3">
+    {% for c in course_cards %}
+    <div class="col-xl-4">
+        <div class="panel-card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0" style="font-size:0.95rem;">{{ c.name }}</h5>
+                {% if c.pending > 0 %}
+                <span class="badge text-bg-warning" style="font-size:0.7rem;">{{ c.pending }} pending</span>
+                {% else %}
+                <span class="badge text-bg-success" style="font-size:0.7rem;">Up to date</span>
+                {% endif %}
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-6"><div style="font-size:0.72rem;color:var(--text-muted);">Students</div><div class="fw-bold">{{ c.students }}</div></div>
+                <div class="col-6"><div style="font-size:0.72rem;color:var(--text-muted);">Avg Grade</div><div class="fw-bold {% if c.avg >= 75 %}text-success{% elif c.avg >= 60 %}text-warning{% else %}text-danger{% endif %}">{{ c.avg }}%</div></div>
+            </div>
+            {% if c.bottleneck != 'None' %}
+            <div class="small p-2 rounded" style="background: #fff7ed;border:1px solid #fed7aa;">
+                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                <strong>Bottleneck:</strong> {{ c.bottleneck }}<br>
+                <span class="text-muted">{{ c.attempts }} avg attempts</span>
+            </div>
+            {% else %}
+            <div class="small p-2 rounded" style="background: #f0fdf4;border:1px solid #bbf7d0;">
+                <i class="bi bi-check-circle-fill text-success"></i> No bottlenecks detected
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# — Gradebook + Radar ——————————————————————————————————— #}
+<div class="row g-3 mb-3">
+    <div class="col-xl-7">
+        <div class="panel-card p-3">
+            <h5 class="mb-3">Gradebook Snapshot</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Student</th><th>Quiz 1</th><th>Quiz 2</th><th>Midterm</th><th>Attendance</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for g in gradebook %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-dot">{{ g.student[:2].upper() }}</div>
+                                    {{ g.student }}
+                                </div>
+                            </td>
+                            <td><span class="fw-semibold {% if g.quiz1 >= 80 %}text-success{% elif g.quiz1 >= 65 %}text-warning{% else %}text-danger{% endif %}">{{ g.quiz1 }}</span></td>
+                            <td><span class="fw-semibold {% if g.quiz2 >= 80 %}text-success{% elif g.quiz2 >= 65 %}text-warning{% else %}text-danger{% endif %}">{{ g.quiz2 }}</span></td>
+                            <td><span class="fw-semibold {% if g.midterm >= 80 %}text-success{% elif g.midterm >= 65 %}text-warning{% else %}text-danger{% endif %}">{{ g.midterm }}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress progress-threshold-{% if g.attendance < 70 %}red{% elif g.attendance < 85 %}amber{% else %}green{% endif %}" style="width:50px;height:6px;border-radius:100px;">
+                                        <div class="progress-bar" style="width:{{ g.attendance }}%"></div>
+                                    </div>
+                                    <span class="small">{{ g.attendance }}%</span>
+                                </div>
+                            </td>
+                            <td><span class="badge {% if g.status == 'On Track' %}text-bg-success{% else %}text-bg-danger{% endif %}" style="border-radius:0.4rem;">{{ g.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="panel-card p-3">
+            <h5 class="mb-0">Class Performance Radar</h5>
+            <span class="chart-subtitle">Average scores by dimension</span>
+            <div id="classRadar" style="height:280px;"></div>
+        </div>
+    </div>
+</div>
+
+{# — Assessment Bottlenecks + Intervention Queue ——————————— #}
+<div class="row g-3">
+    <div class="col-xl-7">
+        <div class="panel-card p-3">
+            <h5 class="mb-3">Assessment Bottlenecks <small class="text-muted fw-normal" style="font-size:0.75rem;">Click row for details</small></h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Assessment</th><th>Avg Attempts</th><th>Flagged</th><th>Pass Rate</th></tr></thead>
+                    <tbody>
+                        {% for name, a in assessments.items() %}
+                        <tr role="button" style="cursor:pointer;" onclick="openAssessment('{{ name }}')" class="table-row-hover">
+                            <td class="fw-500">{{ name }}</td>
+                            <td><span class="badge {% if a.avg_attempts > 2.5 %}text-bg-danger{% else %}text-bg-warning{% endif %}">{{ a.avg_attempts }}</span></td>
+                            <td>{{ a.flagged }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress progress-threshold-{% if a.pass_rate < 60 %}red{% elif a.pass_rate < 75 %}amber{% else %}green{% endif %}" style="width:70px;height:7px;border-radius:100px;">
+                                        <div class="progress-bar" style="width:{{ a.pass_rate }}%"></div>
+                                    </div>
+                                    <span class="small">{{ a.pass_rate }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="panel-card p-3">
+            <h5 class="mb-3">Intervention Queue</h5>
+            {% for s in intervention_queue %}
+            <div class="border rounded-3 p-2 mb-2" role="button" style="cursor:pointer;border-color:var(--border)!important;" onclick="openStudent('{{ s.id }}')">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="avatar-dot">{{ s.name[:2].upper() }}</div>
+                        <strong style="font-size:0.875rem;">{{ s.name }}</strong>
+                    </div>
+                    <span class="badge-risk-{{ s.risk }}">{{ s.risk }}</span>
+                </div>
+                <div class="small text-muted">{{ s.course }} • {{ s.last_active }}</div>
+                <div class="progress progress-threshold-{% if s.progress < 50 %}red{% elif s.progress < 75 %}amber{% else %}green{% endif %} mt-1" style="height:5px;border-radius:100px;">
+                    <div class="progress-bar" style="width:{{ s.progress }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# — Modals ————————————————————————————————————————————— #}
+<div class="modal fade" id="assessmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assessmentTitle">Assessment Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-4"><div class="chart-box"><h5 class="mb-0">Pass Rate Trend</h5><div id="passTrend" style="height:220px;"></div></div></div>
+                    <div class="col-md-4"><div class="chart-box"><h5 class="mb-0">Attempt Distribution</h5><div id="attemptDist" style="height:220px;"></div></div></div>
+                    <div class="col-md-4"><div class="chart-box"><h5 class="mb-0">Score Distribution</h5><div id="scoreDist" style="height:220px;"></div></div></div>
+                </div>
+                <div class="mt-3 panel-card p-3">
+                    <h6 class="mb-2">Students Needing Help</h6>
+                    <ul id="needsHelpList" class="mb-0"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="studentQuickModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentQuickBody"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ML = {
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'Outfit,sans-serif', size: 11, color: '#6b7280' },
+    margin: { t: 10, l: 35, r: 15, b: 35 },
+    xaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb' },
+    yaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb' }
+};
+
+Plotly.newPlot('classRadar', [{
+    type: 'scatterpolar',
+    r: [76, 71, 73, 85, 69, 74],
+    theta: ['Technique', 'Theory', 'Performance', 'Attendance', 'Engagement', 'Assignments'],
+    fill: 'toself',
+    fillcolor: 'rgba(109,78,247,0.12)',
+    line: { color: '#6d4ef7', width: 2 }
+}], {
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'Outfit,sans-serif', size: 11, color: '#6b7280' },
+    margin: { t: 10, l: 20, r: 20, b: 10 },
+    polar: {
+        bgcolor: 'rgba(0,0,0,0)',
+        radialaxis: { visible: true, range: [0, 100], gridcolor: '#e5e7eb', tickfont: { size: 10 } },
+        angularaxis: { gridcolor: '#e5e7eb' }
+    },
+    showlegend: false
+}, { responsive: true, displayModeBar: false });
+
+const assessmentModal = new bootstrap.Modal(document.getElementById('assessmentModal'));
+const studentQuickModal = new bootstrap.Modal(document.getElementById('studentQuickModal'));
+
+async function openAssessment(name) {
+    const res = await fetch(`/api/assessment/${encodeURIComponent(name)}`);
+    if (!res.ok) return;
+    const a = await res.json();
+    document.getElementById('assessmentTitle').textContent = name;
+
+    Plotly.newPlot('passTrend', [{
+        x: ['Cohort 1', 'Cohort 2', 'Cohort 3', 'Cohort 4'], y: a.cohort_trend,
+        mode: 'lines+markers', fill: 'tozeroy',
+        fillcolor: 'rgba(31,170,135,0.1)', line: { color: '#1faa87', width: 2 },
+        marker: { color: '#1faa87', size: 6 }
+    }], { ...ML, margin: { t: 10, l: 40, r: 15, b: 35 }, yaxis: { ...ML.yaxis, range: [40, 100] } }, { responsive: true, displayModeBar: false });
+
+    Plotly.newPlot('attemptDist', [{
+        x: Object.keys(a.attempt_distribution),
+        y: Object.values(a.attempt_distribution),
+        type: 'bar', marker: { color: '#f59e0b' },
+        text: Object.values(a.attempt_distribution).map(v => v + ' students'),
+        textposition: 'outside', textfont: { size: 10 }
+    }], { ...ML, margin: { t: 10, l: 40, r: 15, b: 35 } }, { responsive: true, displayModeBar: false });
+
+    Plotly.newPlot('scoreDist', [{
+        x: Object.keys(a.score_distribution),
+        y: Object.values(a.score_distribution),
+        type: 'bar', marker: { color: ['#22c55e', '#1faa87', '#f59e0b', '#e8395a'] },
+        text: Object.values(a.score_distribution).map(v => v + ' students'),
+        textposition: 'outside', textfont: { size: 10 }
+    }], { ...ML, margin: { t: 10, l: 40, r: 15, b: 35 } }, { responsive: true, displayModeBar: false });
+
+    document.getElementById('needsHelpList').innerHTML = 
+        a.needs_help.map(n => `<li>${n}</li>`).join('');
+    assessmentModal.show();
+}
+
+async function openStudent(id) {
+    const res = await fetch(`/api/student/${id}`);
+    if (!res.ok) return;
+    const s = await res.json();
+    document.getElementById('studentQuickBody').innerHTML = `
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="avatar-dot" style="width:44px;height:44px;font-size:1rem;">${s.name.split(' ').map(w=>w[0]).join('')}</div>
+            <div><strong>${s.name}</strong><br><span class="text-muted small">${s.course}</span></div>
+        </div>
+        <div class="row g-2">
+            <div class="col-6"><div class="panel-card p-2 text-center"><div class="kpi-label">Grade</div><div class="fw-bold fs-5">${s.grade}</div></div></div>
+            <div class="col-6"><div class="panel-card p-2 text-center"><div class="kpi-label">Progress</div><div class="fw-bold fs-5">${s.progress}%</div></div></div>
+        </div>
+        <div class="mt-2"><span class="badge-risk-${s.risk}">${s.risk} Risk</span> • Streak: ${s.streak} days</div>
+        <ul class="mt-2 small">${(s.activity||[]).map(a=>`<li>${a}</li>`).join('')}</ul>`;
+    studentQuickModal.show();
+}
+</script>
+{% endblock %}
