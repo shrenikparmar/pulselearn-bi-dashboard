@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% block title %}Enrollment Analytics{% endblock %}
+{% block page_title %}Enrollment Analytics{% endblock %}
+
+{% block content %}
+
+{# —- Drill-Down Chart ——————————————————————— #}
+<div class="chart-box mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+        <div>
+            <h5 class="mb-0">Enrollment Growth – Drill Down</h5>
+            <div class="d-flex align-items-center gap-2 mt-1">
+                <span class="text-muted small" id="breadcrumb">2024 Annual</span>
+                <span class="badge text-bg-primary" id="levelBadge" style="font-size:0.7rem;">{{ initial_drill.level }}</span>
+            </div>
+            <span class="chart-subtitle">Click a bar to drill down automatically. At Level 3, click a week to cross-filter other charts.</span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="chart-toggle btn-group" role="group">
+                <button type="button" class="btn btn-sm active" onclick="switchChartType('bar', this)">Bar</button>
+                <button type="button" class="btn btn-sm" onclick="switchChartType('line', this)">Line</button>
+                <button type="button" class="btn btn-sm" onclick="switchChartType('area', this)">Area</button>
+            </div>
+            <button class="btn btn-sm btn-primary" id="drillDownBtn"><i class="bi bi-zoom-in"></i> Drill Down</button>
+            <button class="btn btn-sm btn-outline-secondary" id="drillUpBtn"><i class="bi bi-zoom-out"></i> Drill Up</button>
+            <button class="btn btn-sm btn-outline-danger" id="resetBtn"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        </div>
+    </div>
+    <div id="drillChart" style="height:360px;"></div>
+</div>
+
+{# —- Funnel + Drop-out Reasons ——————————————————————— #}
+<div class="row g-3 mb-3">
+    <div class="col-xl-6">
+        <div class="chart-box">
+            <h5 class="mb-0">Enrollment Funnel</h5>
+            <span class="chart-subtitle" id="funnelContext">Visitor-to-learner conversion (All periods)</span>
+            <div id="enrollmentFunnel" style="height:280px;"></div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="chart-box">
+            <h5 class="mb-0">Drop-out Reasons</h5>
+            <span class="chart-subtitle" id="dropoutContext">Primary reasons students leave (All periods)</span>
+            <div id="dropoutReasons" style="height:280px;"></div>
+        </div>
+    </div>
+</div>
+
+{# —- Enrollment by Course Table + Pending Invitations ——————————————————————— #}
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="panel-card p-3">
+            <h5 class="mb-3">Enrollment by Course</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Enrolled</th>
+                            <th>Active</th>
+                            <th>Dropped</th>
+                            <th>Waitlist</th>
+                            <th>Active Rate</th>
+                            <th>Drop Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in course_rows %}
+                        <tr>
+                            <td class="fw-500">{{ c.name }}</td>
+                            <td>{{ c.enrolled }}</td>
+                            <td><span class="text-success fw-semibold">{{ c.active }}</span></td>
+                            <td><span class="text-danger">{{ c.dropped }}</span></td>
+                            <td class="text-muted">{{ c.waitlist }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress progress-threshold-{% if c.active_rate < 50 %}red{% elif c.active_rate < 75 %}amber{% else %}green{% endif %}" style="width:55px; height:6px; border-radius:100px;">
+                                        <div class="progress-bar" style="width:{{ c.active_rate }}%"></div>
+                                    </div>
+                                    <span class="small">{{ c.active_rate }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="{% if c.drop_rate > 15 %}text-danger{% else %}text-muted{% endif %} small">{{ c.drop_rate }}%</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="panel-card p-3">
+            <h5 class="mb-3">Pending Invitations</h5>
+            {% for inv in pending_invitations %}
+            <div class="border rounded-3 p-2 mb-2" style="border-color:var(--border)!important;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <div class="avatar-dot">{{ inv.name[:2].upper() }}</div>
+                    <div>
+                        <div class="fw-semibold" style="font-size:0.875rem;">{{ inv.name }}</div>
+                        <div class="text-muted small">{{ inv.email }}</div>
+                    </div>
+                </div>
+                <div class="small text-muted">{{ inv.course }} • Sent {{ inv.sent_on }}</div>
+                <button class="btn btn-sm btn-outline-primary mt-2 w-100"><i class="bi bi-send"></i> Resend</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const initialDrill = {{ initial_drill|tojson }};
+const funnel = {{ enrollment_funnel|tojson }};
+const reasons = {{ dropout_reasons|tojson }};
+
+const LAYOUT = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'Outfit, sans-serif', size: 12, color: '#6b7280' },
+    xaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb' },
+    yaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb' }
+};
+
+const state = {
+    level: 'annual',
+    period: null,
+    selectedBar: null,
+    currentData: initialDrill,
+    breadcrumb: ['2024 Annual'],
+    chartType: 'bar'
+};
+
+async function fetchDrill(level, period) {
+    const q = new URLSearchParams({ level });
+    if (period) q.set('period', period);
+    const r = await fetch('/api/enrollment/drill?' + q);
+    return r.json();
+}
+
+function plotDrill(data) {
+    state.currentData = data;
+    const isArea = state.chartType === 'area';
+    const isLine = state.chartType === 'line';
+    const trace = {
+        x: data.categories, y: data.values,
+        type: isArea || isLine ? 'scatter' : 'bar',
+        mode: isArea || isLine ? 'lines+markers' : undefined,
+        fill: isArea ? 'tozeroy' : undefined,
+        fillcolor: 'rgba(109,78,247,0.1)',
+        marker: { color: '#6d4ef7', opacity: 0.85 },
+        line: { color: '#6d4ef7', width: 2.5, shape: 'spline' },
+        text: data.values.map(v => v.toLocaleString()),
+        textposition: isArea || isLine ? undefined : 'outside',
+        textfont: { size: 11 }
+    };
+
+    Plotly.newPlot('drillChart', [trace], {
+        ...LAYOUT,
+        margin: { t: 20, l: 50, r: 20, b: 40 }
+    }, { responsive: true, displayModeBar: false });
+
+    document.getElementById('breadcrumb').textContent = state.breadcrumb.join(' > ');
+    document.getElementById('levelBadge').textContent = data.level;
+
+    try {
+        renderLinkedCharts();
+    } catch (err) {
+        console.error('Linked chart render failed:', err);
+        renderFunnel(1);
+        renderDropout(1);
+    }
+
+
+document.getElementById('drillChart').on('plotly_click', async (ev) => {
+    state.selectedBar = ev.points[0].x;
+    if (state.level === 'month') {
+        renderLinkedCharts();
+        return;
+    }
+    await drillDown();
+});
+}
+
+function currentSelectionLabel() {
+    if (!state.selectedBar) return 'All periods';
+    if (state.level === 'annual') return state.selectedBar + ' 2024';
+    if (state.level === 'quarter') return state.selectedBar;
+    return state.selectedBar;
+}
+
+function selectionMultiplier() {
+    if (!state.currentData || !state.selectedBar) return 1;
+    const idx = state.currentData.categories.indexOf(state.selectedBar);
+    if (idx < 0) return 1;
+    const selected = state.currentData.values[idx];
+    const avg = state.currentData.values.reduce((sum, v) => sum + v, 0) / state.currentData.values.length;
+    return Math.max(0.75, Math.min(1.35, selected / avg));
+}
+
+function renderFunnel(multiplier = 1) {
+    const adjusted = funnel.map((s, i) => {
+        const taper = 1 - (i * 0.03);
+        return { stage: s.stage, count: Math.max(20, Math.round(s.count * multiplier * taper)) };
+    });
+
+    Plotly.react('enrollmentFunnel', [{
+        x: adjusted.map(s => s.count),
+        y: adjusted.map(s => s.stage),
+        type: 'bar', orientation: 'h',
+        marker: { color: ['#6d4ef7', '#7c5df6', '#9175f5', '#a68ef4', '#bba7f3'] },
+        text: adjusted.map(s => s.count.toLocaleString()),
+        textposition: 'outside',
+        textfont: { size: 11, color: '#374151' }
+    }], {
+        ...LAYOUT,
+        margin: { t: 10, l: 140, r: 60, b: 30 },
+        xaxis: { ...LAYOUT.xaxis, showgrid: false, showticklabels: false }
+    }, { responsive: true, displayModeBar: false });
+}
+
+function renderDropout(multiplier = 1) {
+    const reasonScale = 1 + ((1 - multiplier) * 0.55);
+    const adjusted = reasons.map((r, i) => {
+        const spread = 1 + (i * 0.02);
+        return { reason: r.reason, value: Math.max(3, Math.round(r.value * reasonScale * spread)) };
+    });
+
+    Plotly.react('dropoutReasons', [{
+        x: adjusted.map(r => r.value),
+        y: adjusted.map(r => r.reason),
+        type: 'bar', orientation: 'h',
+        marker: { color: ['#e8395a', '#f59e0b', '#6d4ef7', '#1faa87', '#6366f1'] },
+        text: adjusted.map(r => r.value + '%'),
+        textposition: 'outside',
+        textfont: { size: 11, color: '#374151' }
+    }], {
+        ...LAYOUT,
+        margin: { t: 10, l: 90, r: 50, b: 30 },
+        xaxis: { ...LAYOUT.xaxis, ticksuffix: '%', showgrid: false }
+    }, { responsive: true, displayModeBar: false });
+}
+
+function renderLinkedCharts() {
+    const mult = selectionMultiplier();
+    const label = currentSelectionLabel();
+    renderFunnel(mult);
+    renderDropout(mult);
+    document.getElementById('funnelContext').textContent = `Visitor-to-learner conversion (${label})`;
+    document.getElementById('dropoutContext').textContent = `Primary reasons students leave (${label})`;
+}
+
+async function drillDown() {
+    if (!state.selectedBar) return;
+    if (state.level === 'annual') {
+        state.level = 'quarter';
+        state.period = state.selectedBar;
+        state.breadcrumb.push(state.selectedBar + ' 2024');
+    } else if (state.level === 'quarter') {
+        state.level = 'month';
+        state.period = state.selectedBar;
+        state.breadcrumb.push(state.selectedBar);
+    } else {
+        return;
+    }
+    state.selectedBar = null;
+    plotDrill(await fetchDrill(state.level, state.period));
+}
+
+function switchChartType(type, btn) {
+    document.querySelectorAll('.chart-toggle .btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.chartType = type;
+    fetchDrill(state.level, state.period).then(plotDrill);
+}
+
+document.getElementById('drillDownBtn').addEventListener('click', async () => {
+    await drillDown();
+});
+
+document.getElementById('drillUpBtn').addEventListener('click', async () => {
+    if (state.level === 'month') {
+        state.level = 'quarter';
+        state.breadcrumb.pop();
+        const q = state.breadcrumb[state.breadcrumb.length - 1].split(' ')[0];
+        state.period = q;
+        state.selectedBar = null;
+        plotDrill(await fetchDrill('quarter', q));
+    } else if (state.level === 'quarter') {
+        state.level = 'annual';
+        state.period = null;
+        state.breadcrumb = ['2024 Annual'];
+        state.selectedBar = null;
+        plotDrill(await fetchDrill('annual'));
+    }
+});
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+    state.level = 'annual'; state.period = null; state.selectedBar = null;
+    state.breadcrumb = ['2024 Annual'];
+    plotDrill(await fetchDrill('annual'));
+});
+
+// Init drill
+renderFunnel(1);
+renderDropout(1);
+plotDrill(initialDrill);
+</script>
+{% endblock %}
