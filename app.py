@@ -238,4 +238,7 @@ def student_api(student_id: str):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Render provides the PORT environment variable automatically
+    port = int(os.environ.get("PORT", 5000))
+    # Force the app to run on 0.0.0.0
+    app.run(host="0.0.0.0", port=port)
