@@ -1,4 +1,3 @@
-import os
 from __future__ import annotations
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
@@ -37,7 +36,7 @@ from data import (
     get_drill,
     get_student_by_id,
 )
-
+import os
 app = Flask(__name__)
 
 
