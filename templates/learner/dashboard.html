@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Learner Dashboard{% endblock %}
+{% block page_title %}Learner Dashboard{% endblock %}
+
+{% block content %}
+
+{# —- Learner Header ——————————————————————— #}
+<div class="mb-3 p-3 rounded-3" style="background:linear-gradient(135deg, #6d4ef7, #1faa87);color:#fff;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h4 class="mb-0 fw-bold">{{ learner.name }}</h4>
+            <div style="opacity:0.8;font-size:0.9rem;">{{ learner.course }}</div>
+        </div>
+        <span class="badge text-bg-light" style="font-size:0.85rem;padding:0.4rem 0.75rem;">🔥 {{ learner.streak }}-day streak</span>
+    </div>
+</div>
+
+{# —- KPI Cards ———————————————————————— #}
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="kpi-card kpi-violet">
+            <div class="kpi-icon"><i class="bi bi-bar-chart-fill"></i></div>
+            <div class="kpi-label">Overall Progress</div>
+            <div class="kpi-value">{{ learner.progress }}%</div>
+            <div class="kpi-desc">Course completion</div>
+            <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> +5% this week</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-amber">
+            <div class="kpi-icon"><i class="bi bi-fire"></i></div>
+            <div class="kpi-label">Streak</div>
+            <div class="kpi-value">{{ learner.streak }} days</div>
+            <div class="kpi-desc">Keep it going!</div>
+            <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> Personal best</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-teal">
+            <div class="kpi-icon"><i class="bi bi-clock-fill"></i></div>
+            <div class="kpi-label">Total Hours</div>
+            <div class="kpi-value">{{ learner.hours }}h</div>
+            <div class="kpi-desc">Tracked learning</div>
+            <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> +2.5h this week</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card kpi-emerald">
+            <div class="kpi-icon"><i class="bi bi-trophy-fill"></i></div>
+            <div class="kpi-label">Rank</div>
+            <div class="kpi-value">#{{ learner.rank }}</div>
+            <div class="kpi-desc">In class leaderboard</div>
+            <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> Up 2 spots</div>
+        </div>
+    </div>
+</div>
+
+{# —- Course Progress Bar ——————————————————————— #}
+<div class="chart-box mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+        <div>
+            <h5 class="mb-0">{{ learner.course }}</h5>
+            <span class="chart-subtitle">Current course progress</span>
+        </div>
+        <span class="fw-bold" style="color:var(--primary);font-size:1.05rem;">{{ learner.progress }}% Complete</span>
+    </div>
+    <div class="learner-progress-track">
+        <div class="learner-progress-fill" style="width:{{ learner.progress }}%;"></div>
+    </div>
+</div>
+
+{# —- Weekly Plan + Deadlines ——————————————————————— #}
+<div class="row g-3 mb-3">
+    <div class="col-xl-5">
+        <div class="panel-card p-3 h-100">
+            <h5 class="mb-3">Weekly Plan</h5>
+            {% for item in weekly_plan %}
+            {% set icons = {'video':'bi-play-circle-fill','quiz':'bi-question-circle-fill','live':'bi-camera-video-fill','assignment':'bi-file-earmark-text-fill'} %}
+            <div class="d-flex justify-content-between align-items-center py-2 check-item {% if item.done %}done{% endif %}" style="border-bottom:1px solid var(--border);">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi {{ icons.get(item.type,'bi-circle-fill') }}" style="color:{% if item.done %}var(--text-muted){% else %}var(--primary){% endif %};"></i>
+                    <span style="font-size:0.875rem;">{{ item.task }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">{{ item.day }}</span>
+                    {% if item.done %}
+                    <span class="badge text-bg-success" style="font-size:0.65rem;">Done</span>
+                    {% else %}
+                    <span class="badge text-bg-secondary" style="font-size:0.65rem;">Todo</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-xl-7">
+        <div class="panel-card p-3 h-100">
+            <h5 class="mb-3">Upcoming Deadlines</h5>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr><th>Task</th><th>Due Date</th><th>Priority</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for d in deadlines %}
+                        <tr>
+                            <td class="fw-500">{{ d.title }}</td>
+                            <td class="text-muted">{{ d.due }}</td>
+                            <td>
+                                <span class="badge {% if d.priority == 'High' %}text-bg-danger{% elif d.priority == 'Medium' %}text-bg-warning{% else %}text-bg-success{% endif %}" style="border-radius:0.4rem;">{{ d.priority }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# —- Radar + Leaderboard + Activity ——————————————————————— #}
+<div class="row g-3">
+    <div class="col-xl-4">
+        <div class="panel-card p-3">
+            <h5 class="mb-0">Skill Mastery Radar</h5>
+            <span class="chart-subtitle">Your current skill profile</span>
+            <div id="learnerRadar" style="height:260px;"></div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="panel-card p-3">
+            <h5 class="mb-3">Class Leaderboard</h5>
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr><th>Rank</th><th>Name</th><th>Score</th><th>Streak</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in leaderboard %}
+                    <tr {% if row.rank == learner.rank %}class="leaderboard-me"{% endif %}>
+                        <td>
+                            {% if row.rank == 1 %}🥇{% elif row.rank == 2 %}🥈{% elif row.rank == 3 %}🥉{% else %}<span class="text-muted">{{ row.rank }}</span>{% endif %}
+                        </td>
+                        <td>{{ row.name }}</td>
+                        <td class="fw-semibold">{{ row.score }}</td>
+                        <td class="text-muted small">🔥 {{ row.streak }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="panel-card p-3">
+            <h5 class="mb-0">Activity vs Class Average</h5>
+            <span class="chart-subtitle">Weekly hours comparison</span>
+            <div id="activityVsClass" style="height:250px;"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const skillMastery = {{ skill_mastery|tojson }};
+    const activity = {{ activity|tojson }};
+
+    const ML = {
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { family: 'Outfit,sans-serif', size: 11, color: '#6b7280' },
+    };
+
+    Plotly.newPlot('learnerRadar', [{
+        type: 'scatterpolar',
+        r: skillMastery.skills.map(s => s.level),
+        theta: skillMastery.skills.map(s => s.name),
+        fill: 'toself',
+        fillcolor: 'rgba(109,78,247,0.12)',
+        line: { color: '#6d4ef7', width: 2.5 },
+        marker: { color: '#6d4ef7', size: 5 },
+    }], {
+        ...ML,
+        margin: { t: 10, l: 20, r: 20, b: 10 },
+        polar: {
+            bgcolor: 'rgba(0,0,0,0)',
+            radialaxis: { visible: true, range: [0, 100], gridcolor: '#e5e7eb', tickfont: { size: 9 } },
+            angularaxis: { gridcolor: '#e5e7eb', tickfont: { size: 11 } },
+        },
+        showlegend: false,
+    }, { responsive: true, displayModeBar: false });
+
+    Plotly.newPlot('activityVsClass', [
+        {
+            x: activity.weeks, y: activity.you,
+            mode: 'lines+markers', name: 'Your Hours',
+            line: { color: '#6d4ef7', width: 2.5, shape: 'spline' },
+            marker: { color: '#6d4ef7', size: 6 },
+            fill: 'tozeroy', fillcolor: 'rgba(109,78,247,0.07)',
+        },
+        {
+            x: activity.weeks, y: activity.class_avg,
+            mode: 'lines+markers', name: 'Class Avg',
+            line: { color: '#1faa87', width: 2, dash: 'dot' },
+            marker: { color: '#1faa87', size: 5 },
+        },
+    ], {
+        ...ML,
+        margin: { t: 10, l: 40, r: 15, b: 35 },
+        xaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb' },
+        yaxis: { gridcolor: '#f3f4f6', linecolor: '#e5e7eb', ticksuffix: 'h' },
+        legend: { orientation: 'h', y: -0.25, font: { size: 11 } },
+    }, { responsive: true, displayModeBar: false });
+</script>
+{% endblock %}

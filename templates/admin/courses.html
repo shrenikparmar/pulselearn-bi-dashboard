@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Courses{% endblock %}
+{% block page_title %}Courses{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  {% for c in courses %}
+    <div class="col-xl-4 col-md-6">
+      <div class="course-card p-3 h-100" role="button" onclick="openCourse('{{ c.id }}')">
+        <div class="d-flex justify-content-between">
+          <h5 class="mb-1">{{ c.name }}</h5>
+          <span class="badge text-bg-secondary">{{ c.category }}</span>
+        </div>
+        <p class="text-muted mb-2">Instructor: {{ c.instructor }}</p>
+        <div class="small">Students: <strong>{{ c.students }}</strong></div>
+        <div class="small">Avg Grade: <strong>{{ c.avg_grade }}%</strong></div>
+        <div class="small">Rating: <strong>{{ c.rating }}</strong></div>
+        <div class="small mb-2">Duration: {{ c.duration }}</div>
+        <div class="progress {% if c.completion < 50 %}progress-threshold-red{% elif c.completion < 75 %}progress-threshold-amber{% else %}progress-threshold-green{% endif %}" style="height:10px;">
+          <div class="progress-bar" style="width:{{ c.completion }}%"></div>
+        </div>
+        <small>{{ c.completion }}% completion</small>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="modal fade" id="courseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="courseModalTitle">Course Detail</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <h6>Module Completion</h6>
+            <div id="moduleBars"></div>
+            <h6 class="mt-3">Top Performers</h6>
+            <ul id="topPerformers" class="mb-0"></ul>
+          </div>
+          <div class="col-md-4"><div id="gradeDistChart" style="height:28px;"></div></div>
+          <div class="col-md-4"><div id="weeklyEnrollChart" style="height:280px;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const courseModal = new bootstrap.Modal(document.getElementById('courseModal'));
+
+async function openCourse(id) {
+  const res = await fetch(`/api/course/${id}`);
+  if (!res.ok) return;
+  const c = await res.json();
+
+  document.getElementById('courseModalTitle').textContent = c.name;
+  const moduleContainer = document.getElementById('moduleBars');
+  moduleContainer.innerHTML = c.modules.map(m => `
+    <div class="mb-2">
+      <div class="d-flex justify-content-between"><span>${m.name}</span><span>${m.completion}%</span></div>
+      <div class="progress ${m.completion < 50 ? 'progress-threshold-red' : m.completion < 75 ? 'progress-threshold-amber' : 'progress-threshold-green'}" style="height:8px;">
+        <div class="progress-bar" style="width:${m.completion}%"></div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('topPerformers').innerHTML = c.top_performers.map(n => `<li>${n}</li>`).join('');
+
+  Plotly.newPlot('gradeDistChart', [{
+    x: Object.keys(c.grade_distribution),
+    y: Object.values(c.grade_distribution),
+    type: 'bar',
+    marker: { color: ['#22c55e','#1faa87','#f59e0b','#e8395a','#6b7280'] },
+    text: Object.values(c.grade_distribution).map(v => v + ' students'),
+    textposition: 'outside', textfont: { size: 10 },
+  }], {
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font:{family:'Outfit,sans-serif',size:11,color:'#6b7280'},
+    title:{text:'Grade Distribution',font:{size:13}},
+    margin:{t:35,l:35,r:20,b:30},
+    xaxis:{gridcolor:'#f3f4f6'}, yaxis:{gridcolor:'#f3f4f6'},
+  }, {responsive:true, displayModeBar:false});
+
+  Plotly.newPlot('weeklyEnrollChart', [{
+    x: ['W1','W2','W3','W4','W5'], y: c.weekly_enrollment,
+    type: 'scatter', mode: 'lines+markers',
+    fill: 'tozeroy', fillcolor: 'rgba(31,170,135,0.1)',
+    line:{color:'#1faa87',width:2.5,shape:'spline'}, marker:{color:'#1faa87',size:6},
+  }], {
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font:{family:'Outfit,sans-serif',size:11,color:'#6b7280'},
+    title:{text:'Weekly Enrollment',font:{size:13}},
+    margin:{t:35,l:35,r:20,b:30},
+    xaxis:{gridcolor:'#f3f4f6'}, yaxis:{gridcolor:'#f3f4f6'},
+  }, {responsive:true, displayModeBar:false});
+
+  courseModal.show();
+}
+</script>
+{% endblock %}
